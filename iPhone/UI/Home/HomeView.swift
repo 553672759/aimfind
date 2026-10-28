@@ -54,9 +54,10 @@ struct HomeView: View {
                 helpButton
             }
 
-            Spacer()
-
+            // 上方固定偏移、下方一整段留白：内容不会被两段等权 Spacer 挤到中间，
+            // 主按钮始终贴在拇指可及的底部。
             Image(systemName: "camera.viewfinder")
+                .padding(.top, 64)
                 .font(.system(size: 52, weight: .thin))
                 .foregroundStyle(.tint)
 
@@ -128,6 +129,7 @@ struct HomeView: View {
                 } else {
                     Label("从截图导入", systemImage: "photo.on.rectangle.angled")
                         .font(.subheadline.weight(.medium))
+                        .fixedSize()
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 11)
                 }
@@ -143,6 +145,7 @@ struct HomeView: View {
                 .frame(width: 104)
                 .padding(.vertical, 11)
                 .padding(.horizontal, 10)
+                .frame(minWidth: 150, maxWidth: 180)
                 .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 12))
         }
     }

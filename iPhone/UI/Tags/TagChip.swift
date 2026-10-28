@@ -71,15 +71,13 @@ struct TagWall: View {
     let states: [String: TagState]
     var onDelete: ((String) -> Void)?
 
-    private let columns = [GridItem(.adaptive(minimum: 104), spacing: 10)]
-
     var body: some View {
         // 字典无序，排序保证：找到的沉底，待找的排在视线前面
         let ids = states.keys.sorted {
             rank(states[$0] ?? .plain) == rank(states[$1] ?? .plain) ? $0 < $1
                                                                      : rank(states[$0] ?? .plain) < rank(states[$1] ?? .plain)
         }
-        LazyVGrid(columns: columns, alignment: .leading, spacing: 10) {
+        FlowLayout(horizontal: 8, vertical: 8) {
             ForEach(ids, id: \.self) { id in
                 TagChip(title: id, state: states[id] ?? .plain) {
                     onDelete?(id)
@@ -94,6 +92,48 @@ struct TagWall: View {
         case .pending, .plain: return 0
         case .probable: return 1
         case .found: return 2
+        }
+    }
+}
+
+/// 左对齐流式排布：按每个标签的实际宽度紧凑换行。
+/// 用 Grid/LazyVGrid 会按最长者定列宽，短标签右边就留一片空洞。
+struct FlowLayout: Layout {
+    var horizontal: CGFloat = 8
+    var vertical: CGFloat = 8
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? .infinity
+        var x: CGFloat = 0
+        var y: CGFloat = 0
+        var rowHeight: CGFloat = 0
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if x > 0, x + size.width > width {
+                x = 0
+                y += rowHeight + vertical
+                rowHeight = 0
+            }
+            x += size.width + horizontal
+            rowHeight = max(rowHeight, size.height)
+        }
+        return CGSize(width: width == .infinity ? max(x - horizontal, 0) : width, height: y + rowHeight)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var x = bounds.minX
+        var y = bounds.minY
+        var rowHeight: CGFloat = 0
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if x > bounds.minX, x - bounds.minX + size.width > bounds.width {
+                x = bounds.minX
+                y += rowHeight + vertical
+                rowHeight = 0
+            }
+            subview.place(at: CGPoint(x: x, y: y), anchor: .topLeading, proposal: ProposedViewSize(size))
+            x += size.width + horizontal
+            rowHeight = max(rowHeight, size.height)
         }
     }
 }
