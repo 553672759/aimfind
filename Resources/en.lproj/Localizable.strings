@@ -1,0 +1,73 @@
+/* AimFind — English */
+
+/* 首页 */
+"AimFind" = "AimFind";
+"导入取件截图，一次找好几件" = "Import pickup screenshots, find several at once";
+"从截图导入" = "From screenshots";
+"手输 1 个" = "Type one";
+"还没有标签：传几张取件通知截图，或者手输一个码" = "No tags yet: import pickup screenshots or type a code";
+"%d 个标签 · 滑动删除" = "%d tags · swipe to delete";
+"没找到取件码" = "No pickup code found";
+"截图里没认出「货架-层-尾号」这种完整取件码，换一张更清晰的试试。" = "No full shelf-level-tail code was readable — try a sharper screenshot.";
+"没看到这些码" = "None of these codes in view";
+"全部找到" = "All found";
+"变焦 %@" = "Zoom %@";
+"要找的码" = "Code to find";
+"6760 或 38-1-6760" = "6760 or 38-1-6760";
+"打开相机" = "Open Camera";
+"好" = "OK";
+
+/* 相机页 */
+"找 %@" = "Finding %@";
+"准备中" = "Warming up";
+"不可用" = "Unavailable";
+"没看到这个码" = "Not in view yet";
+"点画面合焦 · 双指放大" = "Tap to focus · pinch to zoom";
+"变焦 %@" = "Zoom %@";
+"只读到尾号，货架/层请自行核对" = "Only the tail was read — double-check shelf/level";
+"疑似 · " = "Possible · ";
+
+/* 输入回显 */
+"将搜索 %@" = "Will search %@";
+"格式不对：4 位尾号或 货架-层-尾号" = "Bad format: 4-digit tail, or shelf-level-tail";
+
+/* 提示文案 */
+"相机不可用" = "Camera Unavailable";
+"这台设备没有可用的摄像头。" = "This device has no usable camera.";
+"这台设备没有可用的后置摄像头。" = "This device has no usable back camera.";
+"没有相机权限" = "Camera Access Denied";
+"请在「设置 › AimFind › 相机」中允许后重试。" = "Allow camera access in Settings › AimFind › Camera, then try again.";
+"码格式不对" = "Not a valid code";
+"输入 4 位尾号（如 6760），或完整取件码（如 B2-4-2073）。" = "Enter the 4-digit tail (e.g. 6760) or a full pickup code (e.g. B2-4-2073).";
+
+/* 方位与远近 */
+"左上" = "upper left";
+"上中" = "upper middle";
+"右上" = "upper right";
+"左中" = "middle left";
+"正中" = "center";
+"右中" = "middle right";
+"左下" ="lower left";
+"下中" = "lower middle";
+"右下" = "lower right";
+"远，走近点" = "far — step closer";
+"中距" = "mid range";
+"就在眼前" = "right in front";
+"对准货架慢慢扫" = "Sweep the shelf slowly";
+"已扫到 %d 件…" = "%d parcels seen…";
+"这层 %d 件里没有你要的，换一层试试" = "Not among the %d here — try the next level";
+"使用说明" = "How to use";
+"还没有标签：选几张取件通知截图，或者手输一个码" = "No tags yet: pick a few pickup notifications, or type a code";
+"标签做好后点「打开相机」，扫到就标出来；滑一下标签即可删除" = "Then tap Open Camera — swipe a tag to remove it";
+"找到" = "Found";
+"识别准备中" = "Starting recognition";
+"识别就绪" = "Recognition ready";
+"识别不可用" = "Recognition off";
+"已找到" = "Found";
+"疑似，请核对" = "Possible match — check it";
+"只读到尾号，货架/层请自己看一眼" = "Only the tail was read — check shelf/level yourself";
+"2073 或 B2-4-2073" = "2073 or B2-4-2073";
+"手输一个取件码" = "Type a pickup code";
+"先添加取件码" = "Add a code first";
+"识别引擎" = "Recognition engine";
+"关闭相机" = "Close camera";

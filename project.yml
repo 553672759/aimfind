@@ -1,0 +1,93 @@
+# AimFind — XcodeGen 工程规范（框架层）
+# 从 WristEcho 的工程框架复制而来，收敛为单 iOS target：
+#   去掉 watchOS App / Watch 小组件 / GRDB 依赖 / 后台模式，只保留相机所需的一切。
+# 生成：xcodegen generate（详见 docs/BUILD.md；产物 .xcodeproj 不被提交，本文件是工程事实源）。
+#
+# 目标布局：
+#   AimFind        iOS App（iPhone/）
+#   AimFindTests   单元测试（Swift Testing，Tests/）
+
+name: AimFind
+options:
+  bundleIdPrefix: com.aimfind
+  developmentLanguage: zh-Hans
+  deploymentTarget:
+    iOS: "17.0"
+  generateEmptyDirectories: true
+  defaultConfig: Debug
+  createIntermediateGroups: true
+  xcodeVersion: "15.2"
+
+settings:
+  base:
+    SWIFT_VERSION: "5.10"
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    # 自己的 Apple Developer 团队 ID（Xcode › Settings › Accounts 里可查）；
+    # 留空则只能跑模拟器，真机需在 Xcode 里选一次 Team。
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+    CLANG_ENABLE_MODULES: true
+    SWIFT_EMIT_LOC_STRINGS: true
+    ENABLE_USER_SCRIPT_SANDBOXING: true
+
+targets:
+  AimFind:
+    type: application
+    platform: iOS
+    sources:
+      - path: iPhone
+      # XcodeGen 2.44 不读取 target.resources，必须挂在 sources 上并指定 buildPhase。
+      # 语言目录要和 .lproj 的父目录一起加入，才会生成 variant group。
+      - path: Resources
+        buildPhase: resources
+        excludes:
+          - "Assets/AimFind-iOS/**"
+          - "Models/README.md"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.aimfind.app
+        TARGETED_DEVICE_FAMILY: "1"
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+    entitlements:
+      path: Support/Entitlements/AimFind.entitlements
+    info:
+      path: Support/Info/AimFind-Info.plist
+      properties:
+        CFBundleDisplayName: AimFind
+        LSRequiresIPhoneOS: true
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        NSCameraUsageDescription: AimFind 需要相机权限，让你拍一张照片作为查找的起点。图像只在本机处理，不外传。
+        ITSAppUsesNonExemptEncryption: false
+
+  AimFindTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests
+    dependencies:
+      - target: AimFind
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.aimfind.app.tests
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
+
+schemes:
+  AimFind:
+    build:
+      targets:
+        AimFind: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      gatherCoverageData: true
+      targets:
+        - AimFindTests
+    archive:
+      config: Release
