@@ -109,3 +109,20 @@ cd aimfind && xcodegen generate && open AimFind.xcodeproj
 ```
 
 详见 [docs/BUILD.md](docs/BUILD.md)。相机链路**必须真机**验证。
+
+## 许可证
+
+MIT（见 [LICENSE](LICENSE)）。四条对使用者真正有用的说明：
+
+1. **零第三方依赖** —— 没有 SPM 包、没有 CocoaPods，只调用 Apple 系统框架
+   （SwiftUI / AVFoundation / Vision / CoreML 之外的部分没用）。所以不存在
+   "仓库写着 MIT，但某个依赖把传染性条款带进来"这种隐藏坑。
+2. **但你自己加模型时要看清楚** —— 本仓库的历史里有过一份 YOLO 检测实现（已删除，
+   见 `1ea5f92`）。如果你把它接回来并采用 **ultralytics** 的权重：v5/v8/v11 的权重是
+   **AGPL-3.0**，把模型提交进这个 MIT 仓库、或塞进闭源 App 都与许可冲突。
+   三条出路：换 **Apache-2.0** 的检测模型（YOLOX、NanoDet-Plus、PP-YOLOE）、
+   把整个项目改成 AGPL-3.0、或让每个使用者自己导出模型本地放（仓库不分发）。
+3. **素材来源干净** —— 应用图标由 `tools/make_icon.py` 生成（纯标准库脚本，不是网络素材）；
+   测试与文档里的收件地址、驿站名是**编造样本**，只保留取件码文法特征。
+4. **开源许可不等于苹果的分发许可** —— 想装到别人手机（TestFlight / App Store）
+   仍需要你自己的 Apple Developer Program 账号；本仓库不含任何签名证书或描述文件。
