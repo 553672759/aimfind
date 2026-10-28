@@ -43,7 +43,6 @@ targets:
         buildPhase: resources
         excludes:
           - "Assets/AimFind-iOS/**"
-          - "Models/README.md"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.aimfind.app

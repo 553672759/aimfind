@@ -79,7 +79,7 @@ struct HelpView: View {
     /// 相机页只报状态，引擎全名放这儿（现场排查时看得到，平时不占界面）
     private var engineSummary: String {
         guard let reader = try? VisionTextReader() else { return "文字识别不可用" }
-        return "\(reader.name) · \(DetectionConfig.maxFrameRate) fps 上限"
+        return "\(reader.name) · \(ReadingConfig.maxFrameRate) fps 上限"
     }
 
     private func step(_ index: String, _ title: LocalizedStringKey, _ detail: LocalizedStringKey) -> some View {

@@ -26,8 +26,25 @@ open AimFind.xcodeproj
 相机会显示「未内置检测模型」。导出命令与许可证说明见 `Resources/Models/README.md`。
 
 签名团队写在 `project.yml` 的 `settings.base.DEVELOPMENT_TEAM`（开源仓库里默认留空）：
-填你自己的 Team ID 后重新 `xcodegen generate`，或者在 Xcode 的 *Signing & Capabilities* 里选
-（选完记得回填 yml，别只改工程）。Bundle ID `com.aimfind.app` 如已被他人占用，换成自己的前缀即可。
+填你自己的 Team ID 后重新 `xcodegen generate`，或者在 Xcode 的 *Signing & Capabilities* 里选。
+Bundle ID `com.aimfind.app` 如已被他人占用，换成自己的前缀即可。
+
+仓库里 `DEVELOPMENT_TEAM` 故意留空（不把个人团队 ID 公开）。**只想本机真机自测时，用命令行临时传，
+别改文件**：
+
+```sh
+xcodebuild -project AimFind.xcodeproj -scheme AimFind \
+  -destination 'id=<设备UDID>' -derivedDataPath /tmp/aimfind-dd \
+  -allowProvisioningUpdates build DEVELOPMENT_TEAM=你的TeamID
+```
+
+两个坑我都踩过：
+- 环境变量前缀 `DEVELOPMENT_TEAM=x xcodebuild …` **不生效** —— XcodeGen 把 `DEVELOPMENT_TEAM=""`
+  写进了工程设置，工程值优先；必须把 `DEVELOPMENT_TEAM=…` 作为**构建设置覆盖**写在 `build` 之后。
+- 忘了 `-derivedDataPath` 会编到默认 DerivedData，而 `devicectl install` 装的还是旧路径里的包 ——
+  表现为"构建成功、安装成功、手机上是旧版本"。装之前 `stat` 一下产物的修改时间。
+
+只想验证编译不需要签名：加 `CODE_SIGNING_ALLOWED=NO` 并把 destination 换成 `generic/platform=iOS`。
 
 > `project.yml` 是工程事实源：不要在 Xcode 里改 target/资源后忘了回流。
 > `Support/Info/AimFind-Info.plist` 会被 xcodegen 按 yml 的 `info.properties` 回写，权限文案改 yml。
@@ -35,7 +52,7 @@ open AimFind.xcodeproj
 ## 3. 跑起来
 
 - **真机（唯一有效路径）**：插上 iPhone → 选设备 → Run。首次点「打开相机」会弹系统权限窗，
-  之后应看到实时取景 + 检测框 + 底部类别读数。帧率/延迟/框对齐只能在这里量（见 `docs/DETECTION.md` §7）。
+  之后应看到实时取景 + 取件码框 + 顶部 `找到 k/N` 进度。命中率、帧率、框对齐只能在这里量。
 - **模拟器**：能装能跑，但点按钮只会提示「相机不可用」（模拟器无摄像头），这不是 bug。
 - **只想验证编译**（无模拟器 runtime 时可用）：
 
@@ -52,18 +69,20 @@ xcodebuild test -project AimFind.xcodeproj -scheme AimFind \
 ```
 
 测试都用 Swift Testing（`#expect`），全部不依赖摄像头：
-`CameraGateTests`（能力 + 授权 → 结果）、`YoloPostprocessorTests`（喂假张量，覆盖
-`[84,8400]` / `[25200,85]` / `[300,6]` 三种导出布局的解码、objectness 推断、同类 NMS、letterbox 反映射）、
-`ViewportMapperTests`（aspect-fill 框对齐）。若报找不到设备，先 `xcrun simctl list devices available` 看可用模拟器名；
+`CameraGateTests`（能力 + 授权 → 结果）、`CodeGrammarTests` / `CodeInboxTests`（取件码语法、
+通知原文脱敏样本、混淆修正、禁止子串匹配）、`TargetMatcherTests`（多标签匹配与前缀不符不标）、
+`ShelfCensusTests`（货架清点时序）、`AutoFocusTests`（合焦防抖）、`ViewportMapperTests`（框对齐）。若报找不到设备，先 `xcrun simctl list devices available` 看可用模拟器名；
 一台 iOS 模拟器 runtime 都没装时，去 Xcode › Settings › Components 下载。
 
-**没有模拟器 runtime 也能跑纯逻辑测试**（`YoloPostprocessor` / `ViewportMapper` / `Detection`
-只依赖 Foundation + CoreGraphics，不碰 UIKit/AVFoundation），临时包到 `/tmp` 用 SwiftPM 跑：
+**没有模拟器 runtime 也能跑纯逻辑测试**（`iPhone/Code/` 下除 `PhotoCodeImporter` 外都只依赖
+Foundation + CoreGraphics/Vision，不碰 UIKit/AVFoundation），临时包到 `/tmp` 用 SwiftPM 跑：
 
 ```sh
 mkdir -p /tmp/aimfind-pure/Sources/AimFindPure /tmp/aimfind-pure/Tests/AimFindPureTests
-cp iPhone/Detection/{Detection,YoloPostprocessor,ViewportMapper,COCOClassLabels}.swift /tmp/aimfind-pure/Sources/AimFindPure/
-cp Tests/{YoloPostprocessorTests,ViewportMapperTests}.swift /tmp/aimfind-pure/Tests/AimFindPureTests/
+cp iPhone/Code/*.swift /tmp/aimfind-pure/Sources/AimFindPure/
+rm -f /tmp/aimfind-pure/Sources/AimFindPure/PhotoCodeImporter.swift   # 它依赖 UIKit
+cp Tests/*.swift /tmp/aimfind-pure/Tests/AimFindPureTests/
+rm -f /tmp/aimfind-pure/Tests/AimFindPureTests/CameraGateTests.swift  # 依赖 AVFoundation
 sed -i '' 's/@testable import AimFind$/@testable import AimFindPure/' /tmp/aimfind-pure/Tests/AimFindPureTests/*.swift
 cd /tmp/aimfind-pure && swift test
 ```
@@ -84,11 +103,11 @@ cd /tmp/aimfind-pure && swift test
 | 现象 | 改哪个 | 在哪 |
 |---|---|---|
 | 明明是那件却不标/标错 | `confidences`、混淆表 | `iPhone/Code/CodeGrammar.swift` |
-| 远处读不到码 | 识别档 `prefersAccurate`、会话预设 | `iPhone/Code/VisionTextReader.swift`、`CameraPageModel.configureSession` |
+| 远处读不到码 | `minimumTextHeight`(未设，可加)、`prefersAccurate`、会话预设 | `iPhone/Code/VisionTextReader.swift`、`CameraPageModel.configureSession` |
 | 标得太快/误标 | `stableHits`（连续几帧才算找到） | `iPhone/Camera/CameraPageModel.swift` |
 | 画面抽动、焦点乱跳 | `AutoFocus.interval`、`jumpThreshold` | `iPhone/Code/AutoFocus.swift` |
 | 「这层没有」乱说 | `enoughToJudge`、`settleInterval`、`ttl` | `iPhone/Code/ShelfCensus.swift` |
-| 提示来得太慢 | 同上 `settleInterval`；帧率 `maxFrameRate` | `ShelfCensus.swift`、`DetectionConfig.swift` |
-| 耗电/发热 | `maxFrameRate` 降到 6–8、预设回 720p | `DetectionConfig.swift`、`CameraPageModel` |
+| 提示来得太慢 | 同上 `settleInterval`；帧率 `maxFrameRate` | `ShelfCensus.swift`、`iPhone/Code/ReadingConfig.swift` |
+| 耗电/发热 | `maxFrameRate` 降到 6–8、预设回 720p | `iPhone/Code/ReadingConfig.swift`、`CameraPageModel` |
 
 改完跑一遍纯逻辑回归（本文件 §4 的 SwiftPM 办法），阈值类改动都会被时序用例抓到。

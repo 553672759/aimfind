@@ -4,8 +4,8 @@
 > 场景是驿站/货架找件：通知里写「取件码 B2-4-2073」，标签上印着同样的码，你要在一堆包裹里认出那一件。
 > 不做训练、不装模型：Vision 本地文本识别 + 一套针对真实标签的语法校验（误读优先被否决）。
 > 目标检测（YOLO/Core ML）作为 L3 备选路线保留，有测试有文档，暂未接进相机页。
-> **要用的话看 [docs/USAGE.md](docs/USAGE.md)**（App 内右上角「?」也是同一份）；方案见 [docs/CODE_READING.md](docs/CODE_READING.md)，
-> 检测层设计见 [docs/DETECTION.md](docs/DETECTION.md)，构建与调参见 [docs/BUILD.md](docs/BUILD.md)。
+> **要用的话看 [docs/USAGE.md](docs/USAGE.md)**（App 内右上角「?」也是同一份）；
+> 方案与取舍见 [docs/CODE_READING.md](docs/CODE_READING.md)，构建与调参见 [docs/BUILD.md](docs/BUILD.md)。
 
 ## 技术栈（沿用 WristEcho 约定）
 
@@ -34,7 +34,7 @@ iPhone/
   Camera/CameraPage.swift       取景页：预览 + 码框 + 目标/方位读数
   Camera/CameraPageModel.swift  AVCaptureSession → 帧闸 → 识别 → 连续帧稳定判定
   Camera/CameraPreviewView.swift AVCaptureVideoPreviewLayer 宿主
-  Code/                         读码层（当前接线的引擎）
+  Code/                         读码层（唯一在跑的引擎，零模型零依赖）
     CodeGrammar.swift           取件码语法 + ASCII token 边界 + 唯一解释才修正（纯函数）
     CodeInbox.swift             截图文本 → 标签：只收完整码、拒绝修正（纯函数）
     ShelfCensus.swift           货架清点："没扫到" vs "这层没有"（纯函数）
@@ -44,27 +44,23 @@ iPhone/
     PositionHint.swift          九宫格方位 + 远近（纯函数）
     AutoFocus.swift             何时重新合焦（纯函数，时间由调用方传入）
     TextReader.swift            读取引擎接口（只回原文行 + 框）
+    ReadingConfig.swift         帧率上限
+    ViewportMapper.swift        图像归一化 → 视口（aspect-fill cover）
+    PixelBufferGeometry.swift   帧旋正后的尺寸
+    AsyncQueue.swift            把 Vision 的同步 perform 桥接成 async
 
-  Detection/                    目标检测层（L3 备选，未接进相机页）
-    Detector 协议 + VisionYoloDetector（Core ML + Vision）
-    YoloPostprocessor（布局判定/解码/NMS/letterbox，纯函数）
-    ViewportMapper（图像归一化 → 视口，aspect-fill cover）
-    Detection.swift / COCOClassLabels.swift / DetectionConfig.swift
 Resources/
   Assets/AimFind-iOS.xcassets  AppIcon + AccentColor
-  Models/                      放 YOLOv8n.mlpackage（缺模型也能跑，见该目录 README）
   zh-Hans.lproj / en.lproj     Localizable.strings
 Support/
   Info/AimFind-Info.plist      含 NSCameraUsageDescription
   Entitlements/AimFind.entitlements
 Tests/
   CameraGateTests.swift        能力 + 授权 → 结果
-  YoloPostprocessorTests.swift 三种 YOLO 导出布局的解码/NMS/letterbox
   ViewportMapperTests.swift    aspect-fill 框对齐
 tools/make_icon.py        生成 AppIcon（纯标准库，改常量重跑：python3 tools/make_icon.py）
 docs/USAGE.md               使用说明（给实际用它的人看）
 docs/BUILD.md               从零构建指引
-docs/DETECTION.md           检测层设计（分层/坐标契约/帧闸/降级/校准点）
 docs/CODE_READING.md        取码方案（读 C3-4-4483 这类码：L0–L5 分档/校验/训练判据）
 ```
 
@@ -97,6 +93,14 @@ CameraPage：AVCaptureSession 取帧
 **强度与远近**：绿实线 = 尾号精确；黄虚线 `≈` = 需一位混淆修正（提示人工核对）；
 同级命中按**框高度**排序（同一件包裹越近字越大，且大字号更可能是主编号）；
 同尾号出现两处 = 两件包裹，都标出来，锁定用最大的那个。
+
+## 为什么仓库里没有模型文件
+
+这个 App 的识别全部由 **Apple 系统自带的文字识别**完成：零第三方依赖、零模型、离线、不上传任何图片。
+好处不只是体积小 —— 也意味着它可以放心用宽松许可证开源，不必背 YOLO 权重的 AGPL 义务。
+
+若以后确实需要"先定位标签牌、再放大精读"，`docs/CODE_READING.md §5` 记着当时评估过的四条路线与成本，
+以及一条 YOLO 实现（含 CoreML 输出解码、letterbox 反映射、NMS）在 git 历史里的位置。
 
 ## 构建
 

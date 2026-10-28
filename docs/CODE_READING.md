@@ -33,7 +33,7 @@
 **采集**（已按实测调整）
 - 会话预设 `.hd1920x1080`：远处小字首先输在像素上，1080p 给 Vision 的文本高度明显好于 720p；
   代价是单帧识别更慢，而帧闸本来就是"一帧没读完就丢新帧"，所以预览不会卡、只会降有效识别频率。
-- 帧率：读码不需要 12fps，帧闸上限仍是 `DetectionConfig.maxFrameRate`。
+- 帧率：读码不需要 12fps，帧闸上限是 `iPhone/Code/ReadingConfig.swift` 的 `maxFrameRate`。
 - **点对焦 + 双指变焦**（`CameraPageModel.focus(at:)` / `setZoom(_:)`）：
   小标签近拍时连续自动对焦会拉风箱，必须给 `focusPointOfInterest`；
   坐标换算交给 `AVCaptureVideoPreviewLayer.captureDevicePointConverted(fromLayerPoint:)`，
@@ -133,10 +133,13 @@ score = 平均字符置信度 × 语法命中权重 − 归一化编辑距离 ×
 | **D 传统 CV** | 连通域切字符 + 小分类器 | 每字符 50–200 张 | 分钟级 | <2M | <10ms | — | 字符粘连/断裂直接崩 |
 
 **推荐顺序：C → B → A**。C 免费且常够；B 只补"找不到"，不补"认不出"；A 是最后手段。
-注意 §2 的 `VisionYoloDetector` 输出布局契约（`[attrs, anchors]` / letterbox 像素空间）对 B 完全适用，
+> **现状**：路线 A/B 曾有过一份 CoreML + YOLO 实现（解码、letterbox 反映射、NMS、三种导出布局自适应，
+> 带 8 条单测），**已删除** —— 它要解决的问题尚未被证明存在，而本节 §4 的零成本手段一个都没试。
+> 实现留在 git 历史 `1ea5f92`（`iPhone/Detection/`），要接回来看这份文档即可。
+> 当时验证过的输出契约（`[attrs, anchors]` / letterbox 像素空间）对 B 依然适用，
 A 路线要单独处理：**Core ML 的文本识别模型输入是变长宽度**，导出时定长 pad 到 32×W 或用
 `VNCoreMLRequest` 之外的 `MLModel` 直调；类名表（字符集）必须走自定义 metadata，
-这是当前 `VisionYoloDetector.loadModel` 唯一没覆盖的口子（详见 `docs/DETECTION.md` §6 扩展点）。
+这是历史实现里唯一没覆盖的口子（当年写在 `VisionYoloDetector.loadModel`，删除前逻辑见 git `1ea5f92`）。
 
 ## 6. 数据与标注规范（走 A/B 时）
 
@@ -156,7 +159,7 @@ CameraPageModel（会话 + 帧闸 + 发布）        ← 复用，不动
    └─ CodeReader → ReadCode{value, confidence, box}   ← 新增，与 Detector 平级
         VisionTextCodeReader（L1/L2）· SVTRCodeReader（L4）
    ▼
-CodeGrammar（纯函数：逐位字符集 + 混淆修正 + 白名单最近邻）  ← 与 YoloPostprocessor 同等待遇，全单测
+CodeGrammar（纯函数：逐位字符集 + 混淆修正 + 白名单最近邻）  ← 全单测，不碰相机
    ▼
 DetectionOverlay 复用（坐标仍是归一化 box → ViewportMapper）；命中后框变绿 + 触觉 + 大字
 ```

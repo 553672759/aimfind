@@ -58,7 +58,7 @@ final class CameraPageModel: NSObject, ObservableObject, AVCaptureVideoDataOutpu
 
     init(targets: [SearchTarget]) {
         self.targets = targets
-        self.minimumFrameInterval = 1.0 / CFTimeInterval(max(DetectionConfig.maxFrameRate, 1))
+        self.minimumFrameInterval = 1.0 / CFTimeInterval(max(ReadingConfig.maxFrameRate, 1))
         super.init()
     }
 
