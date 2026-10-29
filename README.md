@@ -114,7 +114,9 @@ Resources/
 Support/
   Info/AimFind-Info.plist         含 NSCameraUsageDescription
   Entitlements/AimFind.entitlements
-Tests/                            43 条纯逻辑测试（Swift Testing，不依赖相机与模拟器）
+Tests/                            47 条纯逻辑测试（Swift Testing，不依赖相机与模拟器）
+Package.swift                   `swift test` 直接可用的测试目标
+.github/workflows/tests.yml     CI：每次 push 自动跑 swift test
 tools/make_icon.py                生成 AppIcon（纯标准库，改常量重跑）
 docs/                             USAGE / BUILD / CODE_READING
 ```
@@ -129,7 +131,16 @@ docs/                             USAGE / BUILD / CODE_READING
 | Bundle ID | `com.aimfind.app` |
 | 开发语言 | zh-Hans（英文只覆盖基础界面，帮助正文仍是中文） |
 | 第三方依赖 | **无** |
-| 测试 | Swift Testing（`Tests/`，43 条，可离线跑） |
+| 测试 | Swift Testing（`Tests/`，47 条；`swift test` 一条命令，不需要 Xcode/模拟器） |
+
+## 跑测试
+
+```sh
+swift test
+```
+
+一条命令跑完全部 47 条纯逻辑测试，不需要装 Xcode 工程、不需要模拟器或真机。
+GitHub 上 push 后也会自动跑一遍（`.github/workflows/tests.yml`）。
 
 ## 构建
 

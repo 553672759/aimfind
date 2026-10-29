@@ -2,6 +2,8 @@
 xcuserdata/
 DerivedData/
 build/
+# SwiftPM（swift test）产物
+.build/
 *.xcresult
 
 # XcodeGen 产物：工程由 project.yml 生成，不提交

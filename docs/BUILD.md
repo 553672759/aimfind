@@ -64,31 +64,21 @@ xcodebuild build-for-testing -project AimFind.xcodeproj -scheme AimFind \
 ## 4. 测试
 
 ```sh
-xcodebuild test -project AimFind.xcodeproj -scheme AimFind \
-  -destination 'platform=iOS Simulator,name=iPhone 17'
+swift test          # 在仓库根目录，一条命令跑全部纯逻辑测试（47 条）
 ```
 
-测试都用 Swift Testing（`#expect`），全部不依赖摄像头：
-`CameraGateTests`（能力 + 授权 → 结果）、`CodeGrammarTests` / `CodeInboxTests`（取件码语法、
-通知原文脱敏样本、混淆修正、禁止子串匹配）、`TargetMatcherTests`（多标签匹配与前缀不符不标）、
-`ShelfCensusTests`（货架清点时序）、`AutoFocusTests`（合焦防抖）、`ViewportMapperTests`（框对齐）。若报找不到设备，先 `xcrun simctl list devices available` 看可用模拟器名；
-一台 iOS 模拟器 runtime 都没装时，去 Xcode › Settings › Components 下载。
+仓库自带 `Package.swift`，只打包不依赖 UIKit 的部分（`iPhone/Code/` 与授权判定），
+所以**不需要 Xcode 工程、不需要模拟器、不需要真机**就能跑。覆盖语法/匹配/合焦/清点/
+坐标映射这些真正容易写错的逻辑；相机与界面链路不在其中，仍需真机验证。
 
-**没有模拟器 runtime 也能跑纯逻辑测试**（`iPhone/Code/` 下除 `PhotoCodeImporter` 外都只依赖
-Foundation + CoreGraphics/Vision，不碰 UIKit/AVFoundation），临时包到 `/tmp` 用 SwiftPM 跑：
+想在 iOS 模拟器里跑同一套：
 
 ```sh
-mkdir -p /tmp/aimfind-pure/Sources/AimFindPure /tmp/aimfind-pure/Tests/AimFindPureTests
-cp iPhone/Code/*.swift /tmp/aimfind-pure/Sources/AimFindPure/
-rm -f /tmp/aimfind-pure/Sources/AimFindPure/PhotoCodeImporter.swift   # 它依赖 UIKit
-cp Tests/*.swift /tmp/aimfind-pure/Tests/AimFindPureTests/
-rm -f /tmp/aimfind-pure/Tests/AimFindPureTests/CameraGateTests.swift  # 依赖 AVFoundation
-sed -i '' 's/@testable import AimFind$/@testable import AimFindPure/' /tmp/aimfind-pure/Tests/AimFindPureTests/*.swift
-cd /tmp/aimfind-pure && swift test
+xcodebuild test -project AimFind.xcodeproj -scheme AimFind -destination 'platform=iOS Simulator,name=iPhone 17'
 ```
 
-（`Package.swift` 用 tools 6.2，testTarget 要显式 `dependencies: ["AimFindPure"]`，
-两边都设 `.swiftLanguageMode(.v5)` 与工程一致。相机/overlay 层不在其中，仍需模拟器或真机。）
+（无模拟器 runtime 时去 Xcode › Settings › Components 下载；`xcrun simctl list devices available`
+可看可用机型名。）
 
 ## 5. 加下一个模块
 
